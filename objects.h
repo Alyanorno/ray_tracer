@@ -1,30 +1,30 @@
 #pragma once
 
+#include "use_sdl.h"
 #include "vector.h"
 
-typedef linear_math::Vector<3> Vector;
+extern SDL_Surface* screen;
 
-struct Color
-{
-	unsigned char r, g, b, a;
-};
+typedef linear_math::Vector<3> Vector;
 
 struct Circle
 {
 	float Intersect( Vector& origion, Vector& ray );
 	Vector position;
 	float radius;
+	Uint32 color;
 };
 
 struct Plane
 {
 	float Intersect( Vector& origion, Vector& ray );
 	Vector point1, point2;
+	Uint32 color;
 };
 
 // Not used for now
 struct Light
 {
 	Vector position;
-	Color color;
+	Uint32 color;
 };

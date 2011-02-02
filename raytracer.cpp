@@ -3,62 +3,45 @@
 void Raytracer::Initialize()
 {
 	//set all values of the different objects
-	circles[0];
-	circles[1];
-	circles[2];
-	planes[0];
-	lights[1];
-	lights[2];
+	_circles[0].color = Color::White;
+	_circles[1];
+	_circles[2];
+	_planes[0];
+	_lights[1];
+	_lights[2];
 }
 
 void Raytracer::Draw()
 {
-	for( int i(0); i < 800*600; i++ )
-		colors[i] = CastRay( Vector(0,0,0) );
-	//Use SDL to draw the picture
+	SDL_LockSurface( screen );
+	for( int i(0); i < screen->w * screen->h; i++ )
+		*((Uint32*)screen->pixels + i) = CastRay( Vector(0,0,0) );
+	SDL_UnlockSurface( screen );
 }
 
-Color inline Raytracer::CastRay( Vector& direction )
+Uint32 inline Raytracer::CastRay( Vector& direction )
 {
-	Color result;
+	Uint32 result = 0x000f;
 
 	//Check for collision with circles
 	for( int i(0); i < NUMBER_OF_CIRCLES; i++ )
 	{
-		float intersection = circles[i].Intersect( origion, direction );
+		float intersection = _circles[i].Intersect( _origion, direction );
 		if( intersection )
 		{
-			//temp
-			result.r = 0;
-			result.g = 0;
-			result.b = 0;
-			result.a = 255;
-			//end temp
-			return result;
+			return _circles[i].color;
 		}
 	}
 
 	//Check for collision with planes
 	for( int i(0); i < NUMBER_OF_PLANES; i++ )
 	{
-		float intersection = planes[i].Intersect( origion, direction );
+		float intersection = _planes[i].Intersect( _origion, direction );
 		if( intersection )
 		{
-			//temp
-			result.r = 0;
-			result.g = 0;
-			result.b = 0;
-			result.a = 255;
-			//end temp
-			return result;
+			return _planes[i].color;
 		}
 	}
 
-	//temp
-	result.r = 0;
-	result.g = 0;
-	result.b = 0;
-	result.a = 255;
-	//end temp
 	return result;
 }
