@@ -20,7 +20,7 @@ public:
 private:
 	Uint32 inline CastRay( Vector& direction );
 	Vector _origion;
-	Circle _circles[NUMBER_OF_CIRCLES];
+	Sphere _spheres[NUMBER_OF_CIRCLES];
 	Plane _planes[NUMBER_OF_PLANES];
 	Light _lights[NUMBER_OF_LIGTHS];
 };

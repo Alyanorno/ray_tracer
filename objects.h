@@ -7,7 +7,7 @@ extern SDL_Surface* screen;
 
 typedef linear_math::Vector<3> Vector;
 
-struct Circle
+struct Sphere
 {
 	float Intersect( Vector& origion, Vector& ray );
 	Vector position;

@@ -40,6 +40,7 @@ void Run( void )
 		Draw();
 		time = SDL_GetTicks();
 	}
+	SDL_Quit();
 }
 
 void Input( void )
