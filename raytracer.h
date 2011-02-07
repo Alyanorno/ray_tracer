@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include "use_sdl.h"
 #include "objects.h"
 #include "vector.h"
@@ -17,10 +18,11 @@ class Raytracer
 public:
 	void Initialize();
 	void Draw();
+	Sphere _spheres[NUMBER_OF_CIRCLES];
 private:
 	Uint32 inline CastRay( Vector& direction );
 	Vector _origion;
-	Sphere _spheres[NUMBER_OF_CIRCLES];
+
 	Plane _planes[NUMBER_OF_PLANES];
 	Light _lights[NUMBER_OF_LIGTHS];
 };

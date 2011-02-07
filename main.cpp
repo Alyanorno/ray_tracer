@@ -49,6 +49,18 @@ void Input( void )
 	while( SDL_PollEvent(&event) )
 		if(event.key.keysym.sym == SDLK_ESCAPE)
 			done = true;
+		else if(event.key.keysym.sym == 'd')
+			raytracer._spheres[0].position[0] += 10;
+		else if(event.key.keysym.sym == 'a')
+			raytracer._spheres[0].position[0] -= 10;
+		else if(event.key.keysym.sym == 's')
+			raytracer._spheres[0].position[1] += 10;
+		else if(event.key.keysym.sym == 'w')
+			raytracer._spheres[0].position[1] -= 10;
+		else if(event.key.keysym.sym == 'e')
+			raytracer._spheres[0].position[2] += 10;
+		else if(event.key.keysym.sym == 'f')
+			raytracer._spheres[0].position[2] -= 10;
 }
 
 void Draw( void )
