@@ -6,8 +6,7 @@
 
 extern SDL_Surface* screen;
 
-#define NUMBER_OF_SPHERES 4
-#define NUMBER_OF_PLANES 1
+#define NUMBER_OF_PRIMITIVS 4
 #define NUMBER_OF_LIGHTS 1
 
 typedef linear_math::Vector<3> Vector;
@@ -20,10 +19,11 @@ public:
 	void Draw();
 private:
 	Uint32 inline CastRay( Vector& origion, Vector& direction );
-	Uint32 inline LightRay( Vector& origion, Vector& normal, Uint32 color );
+	Uint32 inline LightRay( Vector& origion, int ID );
 	Vector _origion;
 
-	Sphere _spheres[NUMBER_OF_SPHERES];
-	Plane _planes[NUMBER_OF_PLANES];
+	Primitiv* _primitivs[NUMBER_OF_PRIMITIVS];
+	/*Sphere _spheres[NUMBER_OF_SPHERES];
+	Plane _planes[NUMBER_OF_PLANES];*/
 	Light _lights[NUMBER_OF_LIGHTS];
 };

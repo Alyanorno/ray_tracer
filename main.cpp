@@ -45,7 +45,7 @@ void Run( void )
 
 #define MOVE( xyz, length ) \
 { 	raytracer._lights[0].position[xyz] += length; \
-	raytracer._spheres[3].position[xyz] += length; }
+	((Sphere*)raytracer._primitivs[3])->position[xyz] += length; }
 void Input( void )
 {
 	SDL_Event event;

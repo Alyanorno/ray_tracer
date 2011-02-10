@@ -3,25 +3,28 @@
 void Raytracer::Initialize()
 {
 	_origion = Vector( 0, 0, -500 );
+
+	for( int i(0); i < NUMBER_OF_PRIMITIVS; i++ )
+		_primitivs[i] = new Sphere();
+
 	//set all values of the different objects
-	_spheres[0].color = Color::Red;
-	_spheres[0].radius = 100;
-	_spheres[0].position = Vector( 0, 0, 2 );
+	((Sphere*)_primitivs[0])->material.color = Vector( 1, 0, 0 );
+	((Sphere*)_primitivs[0])->radius = 100;
+	((Sphere*)_primitivs[0])->position = Vector( 0, 0, 2 );
 
-	_spheres[1].color = Color::Green;
-	_spheres[1].radius = 100;
-	_spheres[1].position = Vector( 100, 0, 0 );
+	((Sphere*)_primitivs[1])->material.color = Vector( 0, 1, 0 );
+	((Sphere*)_primitivs[1])->radius = 100;
+	((Sphere*)_primitivs[1])->position = Vector( 100, 0, 0 );
 
-	_spheres[2].color = Color::Blue;
-	_spheres[2].radius = 100;
-	_spheres[2].position = Vector( 0, 100, 0 );
+	((Sphere*)_primitivs[2])->material.color = Vector( 0, 0, 1 );
+	((Sphere*)_primitivs[2])->radius = 100;
+	((Sphere*)_primitivs[2])->position = Vector( 0, 100, 0 );
 
-	_planes[0];
 	_lights[0].position = Vector( 100, -100, -100 );
 
-	_spheres[3].color = Color::White;
-	_spheres[3].radius = 2;
-	_spheres[3].position = _lights[0].position + 1;
+	((Sphere*)_primitivs[3])->material.color = Vector( 1, 0, 0 );
+	((Sphere*)_primitivs[3])->radius = 2;
+	((Sphere*)_primitivs[3])->position = _lights[0].position;
 }
 
 void Raytracer::Draw()
@@ -39,72 +42,53 @@ void Raytracer::Draw()
 
 Uint32 inline Raytracer::CastRay( Vector& origion, Vector& direction )
 {
-	Uint32 result = Color::Black;
+	Uint32 result = 0xff000000;
 	float distans = 1000;
-	Vector normal;
+	int ID = -1;
 
-	//Check for collision with spheres
-	for( int i(0); i < NUMBER_OF_SPHERES; i++ )
+	//Check for collision
+	for( int i(0); i < NUMBER_OF_PRIMITIVS; i++ )
 	{
-		float intersection = _spheres[i].Intersect( origion, direction );
+		float intersection = _primitivs[i]->Intersect( origion, direction );
 		if( intersection && intersection < distans )
 		{
-			result = _spheres[i].color;
 			distans = intersection;
-			normal = direction * distans - _spheres[i].position;
+			ID = i;
 		}
 	}
 
-	//Check for collision with planes
-	for( int i(0); i < NUMBER_OF_PLANES; i++ )
-	{
-		float intersection = _planes[i].Intersect( origion, direction );
-		if( intersection && intersection < distans )
-		{
-			result = _planes[i].color;
-			distans = intersection;
-			normal = direction * distans - _spheres[i].position;
-		}
-	}
-
-	if( result != Color::Black )
-		result = LightRay( direction * distans, normal, result );
+	if( ID != -1 )
+		result = LightRay( origion + direction * distans, ID );
 
 	return result;
 }
 
-Uint32 inline Raytracer::LightRay( Vector& origion, Vector& normal, Uint32 color )
+Uint32 inline Raytracer::LightRay( Vector& origion, int ID )
 {
+	Uint8 r = 0, g = 0, b = 0;
 	for( int i(0); i < NUMBER_OF_LIGHTS; i++ )
 	{
 		float distans = (origion - _lights[i].position).Length();
 		Vector direction = origion - _lights[i].position;
 		direction.Normalize();
 
-		//if( normal.Dot( direction ) > 0 )
-		//	goto end_of_light_loop;
+		float dot = _primitivs[ID]->Normal( origion ).Dot( direction );
+		if( dot > 0 )
+			break;
 
-		//Check for collision with spheres
-		for( int ii(0); ii < NUMBER_OF_SPHERES - 1; ii++ )
+		//Check for collision
+		for( int ii(0); ii < NUMBER_OF_PRIMITIVS; ii++ )
 		{
-			float intersection = _spheres[i].Intersect( _lights[i].position,
-								    direction );
-			if( intersection && intersection < distans )
-				goto end_of_light_loop;
+			float intersection = _primitivs[i]->Intersect( _lights[i].position,
+								     direction );
+			if( !(intersection && intersection < distans) )
+			{
+				float diffuse = dot * _primitivs[ID]->material.diffuse;
+				r += diffuse * _primitivs[ID]->material.color[0] * _lights[i].color[0];
+				g += diffuse * _primitivs[ID]->material.color[1] * _lights[i].color[1];
+				b += diffuse * _primitivs[ID]->material.color[2] * _lights[i].color[2];
+			}
 		}
-
-		//Check for collision with planes
-		for( int ii(0); ii < NUMBER_OF_PLANES; ii++ )
-		{
-			float intersection = _planes[i].Intersect( _lights[i].position,
-								    direction );
-			if( intersection && intersection > distans )
-				goto end_of_light_loop;
-		}
-
-		return Color::Blue + Color::Green;
-end_of_light_loop:;
 	}
-
-	return color;
+	return SDL_MapRGB( screen->format, r, g, b );
 }

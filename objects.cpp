@@ -13,8 +13,16 @@ float Sphere::Intersect( Vector& origion, Vector& direction )
 	else
 		return dot - sqrt( det );
 }
+Vector Sphere::Normal( Vector& intersection )
+{
+	return (intersection - position) * radius;
+}
 
 float Plane::Intersect( Vector& origion, Vector& ray )
 {
 	return 0;
+}
+Vector Plane::Normal( Vector& intersection )
+{
+	return Vector( 0, 0, 0 );
 }
