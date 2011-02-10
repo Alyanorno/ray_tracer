@@ -22,9 +22,7 @@ struct Plane
 	Uint32 color;
 };
 
-// Not used for now
 struct Light
 {
 	Vector position;
-	Uint32 color;
 };

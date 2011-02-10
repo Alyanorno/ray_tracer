@@ -6,7 +6,7 @@
 #pragma comment(lib, "SDL.lib")
 #pragma comment(lib, "SDLmain.lib")
 
-#define GET_COMPONENT( Input, Component ) \
+#define GET_COLOR_COMPONENT( Input, Component ) \
 	((Uint8)((Input \
 	 & screen->format->Component##mask) \
 	>> screen->format->Component##shift) \
