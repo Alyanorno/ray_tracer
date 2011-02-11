@@ -9,7 +9,7 @@ typedef linear_math::Vector<3> Vector;
 
 struct Material
 {
-	Material() : color( 0.2, 0.2, 0.2 ), diffuse( 0.2 ), reflectiv( 0 ) {}
+	Material() : color( 0.2, 0.2, 0.2 ), diffuse( 0.4 ), reflectiv( 0 ) {}
 	Vector color;
 	float diffuse;
 	float reflectiv;
@@ -43,8 +43,3 @@ struct Light
 	Vector position;
 	Vector color;
 };
-
-	/*	float diff = dot * prim->GetMaterial()->GetDiffuse();
-				// add diffuse component to ray color
-				a_Acc += diff * prim->GetMaterial()->GetColor() * light->GetMaterial()->GetColor();
-			}*/

@@ -15,7 +15,9 @@ float Sphere::Intersect( Vector& origion, Vector& direction )
 }
 Vector Sphere::Normal( Vector& intersection )
 {
-	return (intersection - position) * radius;
+	Vector normal = (intersection - position) * radius;
+	normal.Normalize();
+	return normal;
 }
 
 float Plane::Intersect( Vector& origion, Vector& ray )

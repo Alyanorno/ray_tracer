@@ -21,10 +21,6 @@ void Raytracer::Initialize()
 	((Sphere*)_primitivs[2])->position = Vector( 0, 100, 0 );
 
 	_lights[0].position = Vector( 100, -100, -100 );
-
-	((Sphere*)_primitivs[3])->material.color = Vector( 1, 0, 0 );
-	((Sphere*)_primitivs[3])->radius = 2;
-	((Sphere*)_primitivs[3])->position = _lights[0].position;
 }
 
 void Raytracer::Draw()
@@ -58,37 +54,39 @@ Uint32 inline Raytracer::CastRay( Vector& origion, Vector& direction )
 	}
 
 	if( ID != -1 )
-		result = LightRay( origion + direction * distans, ID );
+		result = LightRay( origion + direction * (distans - 0.1), ID );
 
 	return result;
 }
 
 Uint32 inline Raytracer::LightRay( Vector& origion, int ID )
 {
-	Uint8 r = 0, g = 0, b = 0;
+	float r = 0, g = 0, b = 0;
 	for( int i(0); i < NUMBER_OF_LIGHTS; i++ )
 	{
-		float distans = (origion - _lights[i].position).Length();
-		Vector direction = origion - _lights[i].position;
+		float distans = (_lights[i].position - origion).Length();
+		Vector direction = _lights[i].position - origion;
 		direction.Normalize();
 
 		float dot = _primitivs[ID]->Normal( origion ).Dot( direction );
-		if( dot > 0 )
+		if( dot < 0 )
 			break;
-
+		
 		//Check for collision
 		for( int ii(0); ii < NUMBER_OF_PRIMITIVS; ii++ )
 		{
-			float intersection = _primitivs[i]->Intersect( _lights[i].position,
-								     direction );
-			if( !(intersection && intersection < distans) )
+			float intersection = _primitivs[ii]->Intersect( origion,
+								        direction );
+			if( intersection && intersection < distans )
 			{
-				float diffuse = dot * _primitivs[ID]->material.diffuse;
-				r += diffuse * _primitivs[ID]->material.color[0] * _lights[i].color[0];
-				g += diffuse * _primitivs[ID]->material.color[1] * _lights[i].color[1];
-				b += diffuse * _primitivs[ID]->material.color[2] * _lights[i].color[2];
+				goto end_of_i_loop;
 			}
 		}
+		float diffuse = dot * _primitivs[ID]->material.diffuse;
+		r += diffuse * _primitivs[ID]->material.color[0] * _lights[i].color[0];
+		g += diffuse * _primitivs[ID]->material.color[1] * _lights[i].color[1];
+		b += diffuse * _primitivs[ID]->material.color[2] * _lights[i].color[2];
+end_of_i_loop:;
 	}
-	return SDL_MapRGB( screen->format, r, g, b );
+	return SDL_MapRGB( screen->format, 255*r, 255*g, 255*b );
 }

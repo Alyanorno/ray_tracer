@@ -6,7 +6,7 @@
 
 extern SDL_Surface* screen;
 
-#define NUMBER_OF_PRIMITIVS 4
+#define NUMBER_OF_PRIMITIVS 3
 #define NUMBER_OF_LIGHTS 1
 
 typedef linear_math::Vector<3> Vector;
