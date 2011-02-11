@@ -9,10 +9,14 @@ typedef linear_math::Vector<3> Vector;
 
 struct Material
 {
-	Material() : color( 0.2, 0.2, 0.2 ), diffuse( 0.4 ), reflectiv( 0 ) {}
+	Material() : color( 0.2, 0.2, 0.2 ),
+		     diffuse( 0.4 ),
+		     reflection( 0.5 ),
+		     specular( 0.4 ) {}
 	Vector color;
 	float diffuse;
-	float reflectiv;
+	float specular;
+	float reflection;
 };
 
 struct Primitiv
@@ -34,7 +38,7 @@ struct Plane : public Primitiv
 {
 	float Intersect( Vector& origion, Vector& ray );
 	Vector Normal( Vector& intersection );
-	Vector point1, point2;
+	Vector point0, point, normal;
 };
 
 struct Light

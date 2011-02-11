@@ -22,9 +22,11 @@ Vector Sphere::Normal( Vector& intersection )
 
 float Plane::Intersect( Vector& origion, Vector& ray )
 {
+	//(P-P0)*n = 0;
+	//P = dL + L0
 	return 0;
 }
 Vector Plane::Normal( Vector& intersection )
 {
-	return Vector( 0, 0, 0 );
+	return normal;
 }
