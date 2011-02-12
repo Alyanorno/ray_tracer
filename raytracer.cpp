@@ -6,11 +6,12 @@ void Raytracer::Initialize()
 
 	for( int i(0); i < NUMBER_OF_PRIMITIVS; i++ )
 		_primitivs[i] = new Sphere();
+	_primitivs[3] = new Plane();
 
 	//set all values of the different objects
 	((Sphere*)_primitivs[0])->material.color = Vector( 1, 0, 0 );
 	((Sphere*)_primitivs[0])->radius = 100;
-	((Sphere*)_primitivs[0])->position = Vector( 0, 0, 2 );
+	((Sphere*)_primitivs[0])->position = Vector( -150, -150, 0 );
 
 	((Sphere*)_primitivs[1])->material.color = Vector( 0, 1, 0 );
 	((Sphere*)_primitivs[1])->radius = 100;
@@ -20,13 +21,17 @@ void Raytracer::Initialize()
 	((Sphere*)_primitivs[2])->radius = 100;
 	((Sphere*)_primitivs[2])->position = Vector( 0, 100, 0 );
 
-/*	((Plane*)_primitivs[3])->material.color = Vector( 1, 0, 1 );
-	((Plane*)_primitivs[3])->point = Vector( 0, 0, 0 );
-	((Plane*)_primitivs[3])->point0 = Vector( 0, 0, 0 );
-	((Plane*)_primitivs[3])->normal = Vector( 0, 0, 0 ); */
+	((Plane*)_primitivs[3])->material.color = Vector( 0.5, 0.5, 0.5 );
+	((Plane*)_primitivs[3])->point = Vector( 300, 300, 0 );
+	((Plane*)_primitivs[3])->point0 = Vector( 0, 0, 300 );
+	((Plane*)_primitivs[3])->normal = Vector( 0, 0, -1 );//Vector( 0, 1, 0).Cross( Vector( 1, 0, 0 ));
+	((Plane*)_primitivs[3])->normal.Normalize();
+	((Plane*)_primitivs[3])->material.reflection = 1;
+	((Plane*)_primitivs[3])->material.diffuse = 0.5;
+	((Plane*)_primitivs[3])->material.specular = 0;
 
-	_lights[0].position = Vector( 100, -100, -100 );
-	_lights[1].position = Vector( -100, 100, -100 );
+	_lights[0].position = Vector( 100, -100, -200 );
+	_lights[1].position = Vector( -200, -200, -200 );
 }
 
 void Raytracer::Draw()
@@ -34,14 +39,14 @@ void Raytracer::Draw()
 	SDL_LockSurface( screen );
 	for( int i(0); i < screen->w * screen->h; i++ )
 	{
-		Vector direction( i%screen->w- screen->w/2, i/screen->h - screen->h/2, 0 );
+		Vector direction( i%screen->w - screen->w/2, i/screen->h - screen->h/2, 0 );
 		direction -= _origion;
 		direction.Normalize();
 		Vector color = CastRay( _origion, direction );
 		*((Uint32*)screen->pixels + i) = SDL_MapRGB( screen->format,
-							     255*color[0],
-							     255*color[1], 
-							     255*color[2] );
+							     255*(color[0] > 1 ? 1 : color[0]),
+							     255*(color[1] > 1 ? 1 : color[1]),
+							     255*(color[2] > 1 ? 1 : color[2]) );
 	}
 	SDL_UnlockSurface( screen );
 }
@@ -82,7 +87,7 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, int I
 		Vector normal = _primitivs[ID]->Normal( origion );
 		float dot = normal.Dot( direction );
 		if( dot < 0 )
-			break;
+			continue;
 		
 		//Check for collision
 		for( int ii(0); ii < NUMBER_OF_PRIMITIVS; ii++ )
@@ -93,22 +98,37 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, int I
 				goto end_of_i_loop;
 		}
 
-		float diffuse = dot * _primitivs[ID]->material.diffuse;
-		color += _primitivs[ID]->material.color * _lights[i].color * diffuse;
-
-		Vector reflection = direction - normal * (2 * normal.Dot( direction ) );
-		dot = reflection.Dot( hit_direction );
-		if( dot > 0 )
+		// Diffuse
+		if( _primitivs[ID]->material.diffuse )
 		{
-			float specular = powf( dot, 20 ) * _primitivs[ID]->material.specular;
-			color += _primitivs[ID]->material.color * specular;
+			float diffuse = dot * _primitivs[ID]->material.diffuse;
+			color += _primitivs[ID]->material.color * _lights[i].color * diffuse;
 		}
 
+		// Specular
+		if( _primitivs[ID]->material.specular )
+		{
+			Vector reflection = direction - normal * (2 * normal.Dot( direction ) );
+			dot = reflection.Dot( hit_direction );
+			if( dot > 0 )
+			{
+				float specular = powf( dot, 20 ) * _primitivs[ID]->material.specular;
+				color += _primitivs[ID]->material.color * specular;
+			}
+		}
+
+		// Reflection
 		if( _primitivs[ID]->material.reflection > 0 && deapth < 3 )
 			color += CastRay( origion,
 					  hit_direction - normal * (2 * normal.Dot( hit_direction ) ))
 //			       * _primitivs[ID]->material.color
 			       * _primitivs[ID]->material.reflection;
+		
+		// Refraction
+		if( _primitivs[ID]->material.refraction > 0 && deapth < 3 )
+		{
+			// TO DO: Refraction
+		}
 end_of_i_loop:;
 	}
 	return color;

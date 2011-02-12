@@ -12,11 +12,13 @@ struct Material
 	Material() : color( 0.2, 0.2, 0.2 ),
 		     diffuse( 0.4 ),
 		     reflection( 0.5 ),
-		     specular( 0.4 ) {}
+		     specular( 0.4 ),
+		     refraction( 0.0 ) {}
 	Vector color;
 	float diffuse;
 	float specular;
 	float reflection;
+	float refraction;
 };
 
 struct Primitiv
@@ -28,7 +30,7 @@ struct Primitiv
 
 struct Sphere : public Primitiv
 {
-	float Intersect( Vector& origion, Vector& ray );
+	virtual float Intersect( Vector& origion, Vector& ray );
 	Vector Normal( Vector& intersection );
 	Vector position;
 	float radius;
@@ -36,7 +38,7 @@ struct Sphere : public Primitiv
 
 struct Plane : public Primitiv
 {
-	float Intersect( Vector& origion, Vector& ray );
+	virtual float Intersect( Vector& origion, Vector& ray );
 	Vector Normal( Vector& intersection );
 	Vector point0, point, normal;
 };

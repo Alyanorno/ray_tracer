@@ -48,22 +48,41 @@ void Run( void )
  	//raytracer._lights[0].position[xyz] += length;
 void Input( void )
 {
+	static bool pressedD = false;
+	static bool pressedA = false;
+	static bool pressedS = false;
+	static bool pressedW = false;
+	static bool pressedE = false;
+	static bool pressedF = false;
+
 	SDL_Event event;
 	while( SDL_PollEvent(&event) )
 		if(event.key.keysym.sym == SDLK_ESCAPE)
 			done = true;
 		else if(event.key.keysym.sym == 'd')
-			MOVE( 0, 10 )
+			pressedD = pressedD ? false : true;
 		else if(event.key.keysym.sym == 'a')
-			MOVE( 0, -10 )
+			pressedA = pressedA ? false : true;
 		else if(event.key.keysym.sym == 's')
-			MOVE( 1, 10 )
+			pressedS = pressedS ? false : true;
 		else if(event.key.keysym.sym == 'w')
-			MOVE( 1, -10 )
+			pressedW = pressedW ? false : true;
 		else if(event.key.keysym.sym == 'e')
-			MOVE( 2, 10 )
+			pressedE = pressedE ? false : true;
 		else if(event.key.keysym.sym == 'f')
-			MOVE( 2, -10)
+			pressedF = pressedF ? false : true;
+	if( pressedD )
+		MOVE( 0, 10 )
+	if( pressedA )
+		MOVE( 0, -10 )
+	if( pressedS )
+		MOVE( 1, 10 )
+	if( pressedW )
+		MOVE( 1, -10 )
+	if( pressedE )
+		MOVE( 2, 10 )
+	if( pressedF )
+		MOVE( 2, -10 )
 }
 #undef MOVE
 
