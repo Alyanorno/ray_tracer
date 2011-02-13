@@ -9,11 +9,15 @@ typedef linear_math::Vector<3> Vector;
 
 struct Material
 {
-	Material() : color( 0.2, 0.2, 0.2 ),
-		     diffuse( 0.4 ),
-		     reflection( 0.5 ),
-		     specular( 0.4 ),
-		     refraction( 0.0 ) {}
+	Material( Vector _color = Vector( 0.2, 0.2, 0.2 ),
+		  float _diffuse = 0.4,
+		  float _specular = 0.4,
+		  float _reflection = 0.5,
+		  float _refraction = 0.0 ) : color( _color ),
+					     diffuse( _diffuse ),
+					     specular( _specular ),
+					     reflection( _reflection ),
+					     refraction( _refraction ) {}
 	Vector color;
 	float diffuse;
 	float specular;

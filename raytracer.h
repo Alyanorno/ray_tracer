@@ -19,7 +19,7 @@ public:
 	void Draw();
 private:
 	Vector inline CastRay( Vector& origion, Vector& direction );
-	Vector inline LightRay( Vector& origion, Vector& hit_direction, int ID, int deapth = 0 );
+	Vector inline LightRay( Vector& origion, Vector& hit_direction, Primitiv& primitiv, int deapth = 0 );
 	Vector _origion;
 
 	Primitiv* _primitivs[NUMBER_OF_PRIMITIVS];

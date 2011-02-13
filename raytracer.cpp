@@ -43,10 +43,32 @@ void Raytracer::Draw()
 		direction -= _origion;
 		direction.Normalize();
 		Vector color = CastRay( _origion, direction );
-		*((Uint32*)screen->pixels + i) = SDL_MapRGB( screen->format,
-							     255*(color[0] > 1 ? 1 : color[0]),
-							     255*(color[1] > 1 ? 1 : color[1]),
-							     255*(color[2] > 1 ? 1 : color[2]) );
+		Uint8 r = 255*(color[0] > 1 ? 1 : color[0]);
+		Uint8 g = 255*(color[1] > 1 ? 1 : color[1]);
+		Uint8 b = 255*(color[2] > 1 ? 1 : color[2]);
+
+		// Antialiazing
+		if( i - 1 > 0 && i - screen->h > 0 )
+		{
+			Uint8 leftR, leftG, leftB;
+			SDL_GetRGB( *((Uint32*)screen->pixels + (i - 1)),
+				    screen->format,
+				    &leftR,
+				    &leftG,
+				    &leftB );
+			Uint8 upR, upG, upB;
+			SDL_GetRGB( *((Uint32*)screen->pixels + (i - screen->w)),
+				    screen->format,
+				    &upR,
+				    &upG,
+				    &upB );
+
+			r = (r + leftR + leftR) / 3;
+			g = (g + leftG + leftG) / 3;
+			b = (b + leftB + leftB) / 3;
+		}
+
+		*((Uint32*)screen->pixels + i) = SDL_MapRGB( screen->format, r, g, b );
 	}
 	SDL_UnlockSurface( screen );
 }
@@ -70,10 +92,10 @@ Vector inline Raytracer::CastRay( Vector& origion, Vector& direction )
 	if( ID == -1 )
 		return Vector( 0, 0, 0 );
 	else
-		return LightRay( origion + direction * (distans - 0.1), direction, ID );
+		return LightRay( origion + direction * (distans - 0.1), direction, *_primitivs[ID] );
 }
 
-Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, int ID, int deapth )
+Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, Primitiv& primitiv, int deapth )
 {
 	Vector color( 0, 0, 0 );
 	float r = 0, g = 0, b = 0;
@@ -84,7 +106,7 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, int I
 		Vector direction = _lights[i].position - origion;
 		direction.Normalize();
 
-		Vector normal = _primitivs[ID]->Normal( origion );
+		Vector normal = primitiv.Normal( origion );
 		float dot = normal.Dot( direction );
 		if( dot < 0 )
 			continue;
@@ -99,33 +121,33 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, int I
 		}
 
 		// Diffuse
-		if( _primitivs[ID]->material.diffuse )
+		if( primitiv.material.diffuse )
 		{
-			float diffuse = dot * _primitivs[ID]->material.diffuse;
-			color += _primitivs[ID]->material.color * _lights[i].color * diffuse;
+			float diffuse = dot * primitiv.material.diffuse;
+			color += primitiv.material.color * _lights[i].color * diffuse;
 		}
 
 		// Specular
-		if( _primitivs[ID]->material.specular )
+		if( primitiv.material.specular )
 		{
 			Vector reflection = direction - normal * (2 * normal.Dot( direction ) );
 			dot = reflection.Dot( hit_direction );
 			if( dot > 0 )
 			{
-				float specular = powf( dot, 20 ) * _primitivs[ID]->material.specular;
-				color += _primitivs[ID]->material.color * specular;
+				float specular = powf( dot, 20 ) * primitiv.material.specular;
+				color += primitiv.material.color * specular;
 			}
 		}
 
 		// Reflection
-		if( _primitivs[ID]->material.reflection > 0 && deapth < 3 )
+		if( primitiv.material.reflection > 0 && deapth < 3 )
 			color += CastRay( origion,
 					  hit_direction - normal * (2 * normal.Dot( hit_direction ) ))
-//			       * _primitivs[ID]->material.color
-			       * _primitivs[ID]->material.reflection;
+//			       * primitiv.material.color
+			       * primitiv.material.reflection;
 		
 		// Refraction
-		if( _primitivs[ID]->material.refraction > 0 && deapth < 3 )
+		if( primitiv.material.refraction > 0 && deapth < 3 )
 		{
 			// TO DO: Refraction
 		}
