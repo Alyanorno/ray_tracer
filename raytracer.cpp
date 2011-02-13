@@ -37,7 +37,9 @@ void Raytracer::Initialize()
 void Raytracer::Draw()
 {
 	SDL_LockSurface( screen );
-	for( int i(0); i < screen->w * screen->h; i++ )
+	int i;
+#pragma omp parallel for
+	for( i = 0; i < screen->w * screen->h; i++ )
 	{
 		Vector direction( i%screen->w - screen->w/2, i/screen->h - screen->h/2, 0 );
 		direction -= _origion;

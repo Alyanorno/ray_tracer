@@ -1,5 +1,6 @@
 #pragma once
 
+#include <omp.h>
 #include "use_sdl.h"
 #include "objects.h"
 #include "vector.h"

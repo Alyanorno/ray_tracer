@@ -1,5 +1,6 @@
 #include "use_sdl.h"
 #include "raytracer.h"
+#include <cassert>
 
 SDL_Surface* screen;
 bool done = false;
@@ -16,8 +17,10 @@ int main( int argc, char *argv[])
 
 void Initialize( void )
 {
-	SDL_Init(SDL_INIT_VIDEO);
+	int succes = SDL_Init(SDL_INIT_VIDEO);
+	assert( succes != -1 );
 	screen = SDL_SetVideoMode( 800, 600, 32, SDL_HWSURFACE | SDL_DOUBLEBUF );
+	assert( screen );
 
 	raytracer.Initialize();
 }
@@ -30,7 +33,7 @@ void Run( void )
 	Uint32 secondTime = SDL_GetTicks();
 	while( !done )
 	{
-		while( time + 100 > secondTime)
+		while( time + 40 > secondTime)
 		{
 			SDL_Delay(1);
 			secondTime = SDL_GetTicks();
