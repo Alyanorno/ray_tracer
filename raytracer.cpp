@@ -38,8 +38,9 @@ void Raytracer::Draw()
 {
 	SDL_LockSurface( screen );
 	int i;
+	int number_of_pixels = screen->w * screen->h;
 #pragma omp parallel for
-	for( i = 0; i < screen->w * screen->h; i++ )
+	for( i = 0; i < number_of_pixels; i++ )
 	{
 		Vector direction( i%screen->w - screen->w/2, i/screen->h - screen->h/2, 0 );
 		direction -= _origion;
@@ -50,24 +51,28 @@ void Raytracer::Draw()
 		Uint8 b = 255*(color[2] > 1 ? 1 : color[2]);
 
 		// Antialiazing
-		if( i - 1 > 0 && i - screen->h > 0 )
+		if( i - 1 > 0 && i - screen->w > 0 )
 		{
-			Uint8 leftR, leftG, leftB;
+			linear_math::Vector<3,Uint8> left, up, leftUp;
 			SDL_GetRGB( *((Uint32*)screen->pixels + (i - 1)),
 				    screen->format,
-				    &leftR,
-				    &leftG,
-				    &leftB );
-			Uint8 upR, upG, upB;
+				    &left[0],
+				    &left[1],
+				    &left[2] );
 			SDL_GetRGB( *((Uint32*)screen->pixels + (i - screen->w)),
 				    screen->format,
-				    &upR,
-				    &upG,
-				    &upB );
+				    &up[0],
+				    &up[1],
+				    &up[2] );
+			SDL_GetRGB( *((Uint32*)screen->pixels + (i - screen->w - 1)),
+				    screen->format,
+				    &leftUp[0],
+				    &leftUp[1],
+				    &leftUp[2] );
 
-			r = (r + leftR + leftR) / 3;
-			g = (g + leftG + leftG) / 3;
-			b = (b + leftB + leftB) / 3;
+			r = (r + left[0] + up[0] + leftUp[0]) / 4;
+			g = (g + left[1] + up[1] + leftUp[1]) / 4;
+			b = (b + left[2] + up[2] + leftUp[2]) / 4;
 		}
 
 		*((Uint32*)screen->pixels + i) = SDL_MapRGB( screen->format, r, g, b );
@@ -75,32 +80,65 @@ void Raytracer::Draw()
 	SDL_UnlockSurface( screen );
 }
 
-Vector inline Raytracer::CastRay( Vector& origion, Vector& direction )
+float inline Raytracer::Intersection( Vector& origion, Vector& direction, float distans )
 {
-	float distans = 1000;
-	int ID = -1;
-
-	//Check for collision
 	for( int i(0); i < NUMBER_OF_PRIMITIVS; i++ )
 	{
 		float intersection = _primitivs[i]->Intersect( origion, direction );
 		if( intersection && intersection < distans )
+			return -1;
+	}
+	return 0;
+}
+float inline Raytracer::Intersection( Vector& origion, Vector& direction, float* distans )
+{
+	int ID = -1;
+	for( int i(0); i < NUMBER_OF_PRIMITIVS; i++ )
+	{
+		float intersection = _primitivs[i]->Intersect( origion, direction );
+		if( intersection && intersection < *distans )
 		{
-			distans = intersection;
+			*distans = intersection;
 			ID = i;
 		}
 	}
+	return ID;
+}
+
+Vector inline Raytracer::CastRay( Vector origion, Vector direction )
+{
+	float distans = 1000;
+	int ID = Intersection( origion, direction, &distans );
 
 	if( ID == -1 )
 		return Vector( 0, 0, 0 );
 	else
-		return LightRay( origion + direction * (distans - 0.1), direction, *_primitivs[ID] );
+	{
+		origion = origion + direction * (distans - 0.1);
+		Vector color;
+		color = LightRay( origion, direction, *_primitivs[ID] );
+
+		Vector normal = _primitivs[ID]->Normal( origion );
+		// Reflection
+		if( _primitivs[ID]->material.reflection > 0 )
+			color += CastRay( origion,
+					  direction - normal * (2 * normal.Dot( direction ) ))
+//			       * _primitivs[ID]->material.color
+			       * _primitivs[ID]->material.reflection;
+		
+		// Refraction
+		if( _primitivs[ID]->material.refraction > 0 )
+		{
+			// TO DO: Refraction
+		}
+		return color;
+	}
 }
 
-Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, Primitiv& primitiv, int deapth )
+Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, Primitiv& primitiv )
 {
 	Vector color( 0, 0, 0 );
-	float r = 0, g = 0, b = 0;
+	Vector normal = primitiv.Normal( origion );
 	for( int i(0); i < NUMBER_OF_LIGHTS; i++ )
 	{
 		float distans = (_lights[i].position - origion).Length();
@@ -108,19 +146,13 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, Primi
 		Vector direction = _lights[i].position - origion;
 		direction.Normalize();
 
-		Vector normal = primitiv.Normal( origion );
 		float dot = normal.Dot( direction );
 		if( dot < 0 )
 			continue;
 		
 		//Check for collision
-		for( int ii(0); ii < NUMBER_OF_PRIMITIVS; ii++ )
-		{
-			float intersection = _primitivs[ii]->Intersect( origion,
-								        direction );
-			if( intersection && intersection < distans )
-				goto end_of_i_loop;
-		}
+		if( Intersection( origion, direction, distans ) == -1 )
+			continue;
 
 		// Diffuse
 		if( primitiv.material.diffuse )
@@ -141,19 +173,6 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, Primi
 			}
 		}
 
-		// Reflection
-		if( primitiv.material.reflection > 0 && deapth < 3 )
-			color += CastRay( origion,
-					  hit_direction - normal * (2 * normal.Dot( hit_direction ) ))
-//			       * primitiv.material.color
-			       * primitiv.material.reflection;
-		
-		// Refraction
-		if( primitiv.material.refraction > 0 && deapth < 3 )
-		{
-			// TO DO: Refraction
-		}
-end_of_i_loop:;
 	}
 	return color;
 }

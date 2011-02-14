@@ -33,7 +33,7 @@ void Run( void )
 	Uint32 secondTime = SDL_GetTicks();
 	while( !done )
 	{
-		while( time + 40 > secondTime)
+		while( time + 10 > secondTime)
 		{
 			SDL_Delay(1);
 			secondTime = SDL_GetTicks();
@@ -46,6 +46,7 @@ void Run( void )
 	SDL_Quit();
 }
 
+#define LENGTH 5
 #define MOVE( xyz, length ) \
 	((Sphere*)raytracer._primitivs[0])->position[xyz] += length;
  	//raytracer._lights[0].position[xyz] += length;
@@ -75,19 +76,20 @@ void Input( void )
 		else if(event.key.keysym.sym == 'f')
 			pressedF = pressedF ? false : true;
 	if( pressedD )
-		MOVE( 0, 10 )
+		MOVE( 0, LENGTH )
 	if( pressedA )
-		MOVE( 0, -10 )
+		MOVE( 0, -LENGTH )
 	if( pressedS )
-		MOVE( 1, 10 )
+		MOVE( 1, LENGTH )
 	if( pressedW )
-		MOVE( 1, -10 )
+		MOVE( 1, -LENGTH )
 	if( pressedE )
-		MOVE( 2, 10 )
+		MOVE( 2, LENGTH )
 	if( pressedF )
-		MOVE( 2, -10 )
+		MOVE( 2, -LENGTH )
 }
 #undef MOVE
+#undef LENGTH
 
 void Draw( void )
 {
