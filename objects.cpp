@@ -11,8 +11,36 @@ float Sphere::Intersect( Vector& origion, Vector& direction )
 	if( det < 0 )
 		return 0;
 	else
-		return dot - sqrt( det );
+	{
+		float result1 = dot - sqrt( det );
+		float result2 = dot + sqrt( det );
+		return result1 > 0 ? result1 : result2;
+	}
 }
+
+bool Sphere::Refraction( Vector& origion, Vector& direction )
+{
+	Vector normal = Normal( origion );
+
+	// Change the direction
+	float n = 1 / material.index;
+	float c1 = -normal.Dot( direction );
+	if( c1 < 0 )
+		return false;
+	float c2 = 1 - n * n * ( 1 - c1 * c1 );
+
+	if( c2 <= 0 )
+		return false;
+
+	direction = direction * n + normal * ( n * c1 - sqrtf( c2 ));
+	direction.Normalize();
+
+	// Calculate new origion
+	origion = origion + direction * (radius * 2);
+
+	return true;
+}
+
 Vector Sphere::Normal( Vector& intersection )
 {
 	Vector normal = (intersection - position) * radius;

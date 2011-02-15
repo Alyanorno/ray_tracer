@@ -21,7 +21,7 @@ public:
 private:
 	float inline Intersection( Vector& origion, Vector& direction, float distans );
 	float inline Intersection( Vector& origion, Vector& direction, float* distans );
-	Vector inline CastRay( Vector origion, Vector direction );
+	Vector inline CastRay( Vector& origion, Vector& direction );
 	Vector inline LightRay( Vector& origion, Vector& hit_direction, Primitiv& primitiv );
 	Vector _origion;
 

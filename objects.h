@@ -13,16 +13,19 @@ struct Material
 		  float _diffuse = 0.4,
 		  float _specular = 0.4,
 		  float _reflection = 0.5,
-		  float _refraction = 0.0 ) : color( _color ),
-					     diffuse( _diffuse ),
-					     specular( _specular ),
-					     reflection( _reflection ),
-					     refraction( _refraction ) {}
+		  float _refraction = 0.0,
+		  float _index = 0.0 ) : color( _color ),
+					 diffuse( _diffuse ),
+					 specular( _specular ),
+					 reflection( _reflection ),
+					 refraction( _refraction ),
+       					 index( _index ) {}
 	Vector color;
 	float diffuse;
 	float specular;
 	float reflection;
 	float refraction;
+	float index;
 };
 
 struct Primitiv
@@ -35,6 +38,7 @@ struct Primitiv
 struct Sphere : public Primitiv
 {
 	virtual float Intersect( Vector& origion, Vector& ray );
+	bool Refraction( Vector& origion, Vector& direction );
 	Vector Normal( Vector& intersection );
 	Vector position;
 	float radius;

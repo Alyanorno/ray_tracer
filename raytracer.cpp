@@ -9,23 +9,22 @@ void Raytracer::Initialize()
 	_primitivs[3] = new Plane();
 
 	//set all values of the different objects
-	((Sphere*)_primitivs[0])->material.color = Vector( 1, 0, 0 );
+	((Sphere*)_primitivs[0])->material = Material( Vector( 1, 0, 0 ), 0.0, 0.0, 0.0, 1.0, 1.3 );
 	((Sphere*)_primitivs[0])->radius = 100;
 	((Sphere*)_primitivs[0])->position = Vector( -150, -150, 0 );
 
-	((Sphere*)_primitivs[1])->material.color = Vector( 0, 1, 0 );
+	((Sphere*)_primitivs[1])->material = Material( Vector( 0, 1, 0 ), 0.5, 0.5, 0.0, 0.0, 0.0 );
 	((Sphere*)_primitivs[1])->radius = 100;
 	((Sphere*)_primitivs[1])->position = Vector( 100, 0, 0 );
 
-	((Sphere*)_primitivs[2])->material.color = Vector( 0, 0, 1 );
+	((Sphere*)_primitivs[2])->material = Material( Vector( 0, 0, 1 ), 0.5, 0.5, 0.0, 0.0, 0.0 );
 	((Sphere*)_primitivs[2])->radius = 100;
 	((Sphere*)_primitivs[2])->position = Vector( 0, 100, 0 );
 
 	((Plane*)_primitivs[3])->material.color = Vector( 0.5, 0.5, 0.5 );
 	((Plane*)_primitivs[3])->point = Vector( 300, 300, 0 );
 	((Plane*)_primitivs[3])->point0 = Vector( 0, 0, 300 );
-	((Plane*)_primitivs[3])->normal = Vector( 0, 0, -1 );//Vector( 0, 1, 0).Cross( Vector( 1, 0, 0 ));
-	((Plane*)_primitivs[3])->normal.Normalize();
+	((Plane*)_primitivs[3])->normal = Vector( 0, 0, -1 );
 	((Plane*)_primitivs[3])->material.reflection = 1;
 	((Plane*)_primitivs[3])->material.diffuse = 0.5;
 	((Plane*)_primitivs[3])->material.specular = 0;
@@ -53,7 +52,7 @@ void Raytracer::Draw()
 		// Antialiazing
 		if( i - 1 > 0 && i - screen->w > 0 )
 		{
-			linear_math::Vector<3,Uint8> left, up, leftUp;
+			linear_math::Vector<3,Uint8> left, up, leftUp, rightUp;
 			SDL_GetRGB( *((Uint32*)screen->pixels + (i - 1)),
 				    screen->format,
 				    &left[0],
@@ -69,10 +68,15 @@ void Raytracer::Draw()
 				    &leftUp[0],
 				    &leftUp[1],
 				    &leftUp[2] );
+			SDL_GetRGB( *((Uint32*)screen->pixels + (i - screen->w + 1)),
+				    screen->format,
+				    &rightUp[0],
+				    &rightUp[1],
+				    &rightUp[2] );
 
-			r = (r + left[0] + up[0] + leftUp[0]) / 4;
-			g = (g + left[1] + up[1] + leftUp[1]) / 4;
-			b = (b + left[2] + up[2] + leftUp[2]) / 4;
+			r = (r + r + left[0] + up[0] + leftUp[0] + rightUp[0]) / 6;
+			g = (g + g + left[1] + up[1] + leftUp[1] + rightUp[1]) / 6;
+			b = (b + b + left[2] + up[2] + leftUp[2] + rightUp[2]) / 6;
 		}
 
 		*((Uint32*)screen->pixels + i) = SDL_MapRGB( screen->format, r, g, b );
@@ -105,7 +109,7 @@ float inline Raytracer::Intersection( Vector& origion, Vector& direction, float*
 	return ID;
 }
 
-Vector inline Raytracer::CastRay( Vector origion, Vector direction )
+Vector inline Raytracer::CastRay( Vector& origion, Vector& direction )
 {
 	float distans = 1000;
 	int ID = Intersection( origion, direction, &distans );
@@ -113,29 +117,10 @@ Vector inline Raytracer::CastRay( Vector origion, Vector direction )
 	if( ID == -1 )
 		return Vector( 0, 0, 0 );
 	else
-	{
-		origion = origion + direction * (distans - 0.1);
-		Vector color;
-		color = LightRay( origion, direction, *_primitivs[ID] );
-
-		Vector normal = _primitivs[ID]->Normal( origion );
-		// Reflection
-		if( _primitivs[ID]->material.reflection > 0 )
-			color += CastRay( origion,
-					  direction - normal * (2 * normal.Dot( direction ) ))
-//			       * _primitivs[ID]->material.color
-			       * _primitivs[ID]->material.reflection;
-		
-		// Refraction
-		if( _primitivs[ID]->material.refraction > 0 )
-		{
-			// TO DO: Refraction
-		}
-		return color;
-	}
+		return LightRay( origion + direction * (distans - 0.1), direction, *_primitivs[ID] );
 }
 
-Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, Primitiv& primitiv )
+Vector inline Raytracer::LightRay( Vector& origion, Vector& hitDirection, Primitiv& primitiv )
 {
 	Vector color( 0, 0, 0 );
 	Vector normal = primitiv.Normal( origion );
@@ -165,14 +150,37 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hit_direction, Primi
 		if( primitiv.material.specular )
 		{
 			Vector reflection = direction - normal * (2 * normal.Dot( direction ) );
-			dot = reflection.Dot( hit_direction );
+			dot = reflection.Dot( hitDirection );
 			if( dot > 0 )
 			{
 				float specular = powf( dot, 20 ) * primitiv.material.specular;
 				color += primitiv.material.color * specular;
 			}
 		}
-
 	}
+
+	// Reflection
+	if( primitiv.material.reflection > 0 )
+		color += CastRay( origion,
+				  hitDirection - normal * (2 * normal.Dot( hitDirection ) ))
+//		       * primitiv.material.color
+		       * primitiv.material.reflection;
+	// Refraction
+	else if( primitiv.material.refraction > 0 )
+	{
+		// TO DO: Refraction
+		Sphere* sphere = dynamic_cast<Sphere*>( &primitiv );
+		if( sphere )
+		{
+			float refraction = sphere->material.refraction;
+			Vector refOrigion = origion, refDirection = hitDirection;
+			if( sphere->Refraction( refOrigion, refDirection ) )
+				color += CastRay( refOrigion, refDirection );
+		}
+		else
+		{
+		}
+	}
+
 	return color;
 }
