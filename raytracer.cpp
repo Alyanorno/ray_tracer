@@ -13,11 +13,11 @@ void Raytracer::Initialize()
 	((Sphere*)_primitivs[0])->radius = 100;
 	((Sphere*)_primitivs[0])->position = Vector( -150, -150, 0 );
 
-	((Sphere*)_primitivs[1])->material = Material( Vector( 0, 1, 0 ), 0.5, 0.5, 0.0, 0.0, 0.0 );
+	((Sphere*)_primitivs[1])->material = Material( Vector( 0, 1, 0 ), 0.5, 0.5, 0.5, 0.0, 0.0 );
 	((Sphere*)_primitivs[1])->radius = 100;
 	((Sphere*)_primitivs[1])->position = Vector( 100, 0, 0 );
 
-	((Sphere*)_primitivs[2])->material = Material( Vector( 0, 0, 1 ), 0.5, 0.5, 0.0, 0.0, 0.0 );
+	((Sphere*)_primitivs[2])->material = Material( Vector( 0, 0, 1 ), 0.5, 0.5, 0.5, 0.0, 0.0 );
 	((Sphere*)_primitivs[2])->radius = 100;
 	((Sphere*)_primitivs[2])->position = Vector( 0, 100, 0 );
 
@@ -44,7 +44,7 @@ void Raytracer::Draw()
 		Vector direction( i%screen->w - screen->w/2, i/screen->h - screen->h/2, 0 );
 		direction -= _origion;
 		direction.Normalize();
-		Vector color = CastRay( _origion, direction );
+		Vector color = CastRay( Ray( _origion, direction ) );
 		Uint8 r = 255*(color[0] > 1 ? 1 : color[0]);
 		Uint8 g = 255*(color[1] > 1 ? 1 : color[1]);
 		Uint8 b = 255*(color[2] > 1 ? 1 : color[2]);
@@ -84,22 +84,22 @@ void Raytracer::Draw()
 	SDL_UnlockSurface( screen );
 }
 
-float inline Raytracer::Intersection( Vector& origion, Vector& direction, float distans )
+float inline Raytracer::Intersection( Ray& ray, float distans )
 {
 	for( int i(0); i < NUMBER_OF_PRIMITIVS; i++ )
 	{
-		float intersection = _primitivs[i]->Intersect( origion, direction );
+		float intersection = _primitivs[i]->Intersect( ray );
 		if( intersection && intersection < distans )
 			return -1;
 	}
 	return 0;
 }
-float inline Raytracer::Intersection( Vector& origion, Vector& direction, float* distans )
+float inline Raytracer::Intersection( Ray& ray, float* distans )
 {
 	int ID = -1;
 	for( int i(0); i < NUMBER_OF_PRIMITIVS; i++ )
 	{
-		float intersection = _primitivs[i]->Intersect( origion, direction );
+		float intersection = _primitivs[i]->Intersect( ray );
 		if( intersection && intersection < *distans )
 		{
 			*distans = intersection;
@@ -109,26 +109,29 @@ float inline Raytracer::Intersection( Vector& origion, Vector& direction, float*
 	return ID;
 }
 
-Vector inline Raytracer::CastRay( Vector& origion, Vector& direction )
+Vector inline Raytracer::CastRay( Ray& ray )
 {
 	float distans = 1000;
-	int ID = Intersection( origion, direction, &distans );
+	int ID = Intersection( ray, &distans );
 
 	if( ID == -1 )
 		return Vector( 0, 0, 0 );
 	else
-		return LightRay( origion + direction * (distans - 0.1), direction, *_primitivs[ID] );
+		return LightRay( Ray( ray.origion + ray.direction * (distans - 0.1),
+				      ray.direction,
+				      ray.deapth + 1 ),
+				 *_primitivs[ID] );
 }
 
-Vector inline Raytracer::LightRay( Vector& origion, Vector& hitDirection, Primitiv& primitiv )
+Vector inline Raytracer::LightRay( Ray& ray, Primitiv& primitiv )
 {
 	Vector color( 0, 0, 0 );
-	Vector normal = primitiv.Normal( origion );
+	Vector normal = primitiv.Normal( ray.origion );
 	for( int i(0); i < NUMBER_OF_LIGHTS; i++ )
 	{
-		float distans = (_lights[i].position - origion).Length();
+		float distans = (_lights[i].position - ray.origion).Length();
 
-		Vector direction = _lights[i].position - origion;
+		Vector direction = _lights[i].position - ray.origion;
 		direction.Normalize();
 
 		float dot = normal.Dot( direction );
@@ -136,7 +139,7 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hitDirection, Primit
 			continue;
 		
 		//Check for collision
-		if( Intersection( origion, direction, distans ) == -1 )
+		if( Intersection( Ray( ray.origion, direction ), distans ) == -1 )
 			continue;
 
 		// Diffuse
@@ -150,7 +153,7 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hitDirection, Primit
 		if( primitiv.material.specular )
 		{
 			Vector reflection = direction - normal * (2 * normal.Dot( direction ) );
-			dot = reflection.Dot( hitDirection );
+			dot = reflection.Dot( ray.direction );
 			if( dot > 0 )
 			{
 				float specular = powf( dot, 20 ) * primitiv.material.specular;
@@ -159,23 +162,27 @@ Vector inline Raytracer::LightRay( Vector& origion, Vector& hitDirection, Primit
 		}
 	}
 
+	if( ray.deapth >= 4 )
+		return color;
 	// Reflection
 	if( primitiv.material.reflection > 0 )
-		color += CastRay( origion,
-				  hitDirection - normal * (2 * normal.Dot( hitDirection ) ))
+		color += CastRay( Ray( ray.origion,
+				  ray.direction - normal * (2 * normal.Dot( ray.direction )),
+				  ray.deapth + 1 ))
 //		       * primitiv.material.color
 		       * primitiv.material.reflection;
+	
 	// Refraction
-	else if( primitiv.material.refraction > 0 )
+	if( primitiv.material.refraction > 0 )
 	{
 		// TO DO: Refraction
 		Sphere* sphere = dynamic_cast<Sphere*>( &primitiv );
 		if( sphere )
 		{
 			float refraction = sphere->material.refraction;
-			Vector refOrigion = origion, refDirection = hitDirection;
-			if( sphere->Refraction( refOrigion, refDirection ) )
-				color += CastRay( refOrigion, refDirection );
+			Ray refractionRay( ray.origion, ray.direction, ray.deapth + 1 );
+			if( sphere->Refraction( refractionRay ))
+				color += CastRay( refractionRay );
 		}
 		else
 		{

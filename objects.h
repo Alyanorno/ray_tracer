@@ -28,17 +28,26 @@ struct Material
 	float index;
 };
 
+struct Ray
+{
+	Ray( Vector _origion, Vector _direction, int _deapth = 0 ) : origion( _origion ),
+								     direction( _direction ),
+								     deapth( _deapth ) {}
+	Vector origion, direction;
+	int deapth;
+};
+
 struct Primitiv
 {
-	virtual float Intersect( Vector& origion, Vector& ray ) = 0;
+	virtual float Intersect( Ray& ray ) = 0;
 	virtual Vector Normal( Vector& intersection ) = 0;
 	Material material;
 };
 
 struct Sphere : public Primitiv
 {
-	virtual float Intersect( Vector& origion, Vector& ray );
-	bool Refraction( Vector& origion, Vector& direction );
+	virtual float Intersect( Ray& ray );
+	bool Refraction( Ray& ray );
 	Vector Normal( Vector& intersection );
 	Vector position;
 	float radius;
@@ -46,7 +55,7 @@ struct Sphere : public Primitiv
 
 struct Plane : public Primitiv
 {
-	virtual float Intersect( Vector& origion, Vector& ray );
+	virtual float Intersect( Ray& ray );
 	Vector Normal( Vector& intersection );
 	Vector point0, point, normal;
 };

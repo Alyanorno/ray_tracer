@@ -19,10 +19,10 @@ public:
 	void Initialize();
 	void Draw();
 private:
-	float inline Intersection( Vector& origion, Vector& direction, float distans );
-	float inline Intersection( Vector& origion, Vector& direction, float* distans );
-	Vector inline CastRay( Vector& origion, Vector& direction );
-	Vector inline LightRay( Vector& origion, Vector& hit_direction, Primitiv& primitiv );
+	float inline Intersection( Ray& ray, float distans );
+	float inline Intersection( Ray& ray, float* distans );
+	Vector inline CastRay( Ray& ray );
+	Vector inline LightRay( Ray& ray, Primitiv& primitiv );
 	Vector _origion;
 
 	Primitiv* _primitivs[NUMBER_OF_PRIMITIVS];
